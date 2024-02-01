@@ -21,6 +21,7 @@ type StudentUsecaseImpl struct {
 }
 
 func (s *StudentUsecaseImpl) FetchStudentById(c context.Context, id uuid.UUID) (*models.Student, error) {
+
 	studentResult, err := s.studentRepo.GetStudentByID(c, id)
 	if err != nil {
 		return nil, err

@@ -1,24 +1,27 @@
-# Use the official Golang image as a base image
-FROM golang:1.21.3
+FROM golang:alpine as builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the go.mod and go.sum files to the working directory
-COPY go.mod .
-COPY go.sum .
+COPY go.mod ./
+COPY go.sum ./
 
-# Download and install Go module dependencies
 RUN go mod download
 
-# Copy the entire project to the working directory
 COPY . .
 
-# Build the Go application
 RUN go build -o main ./cmd/server
 
-# Expose the port on which the application will run
+FROM debian:buster-slim
+
+RUN set -x && apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y \
+    ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY --from=builder /app .
+
 EXPOSE 8080
 
-# Command to run the executable
 CMD ["./main"]

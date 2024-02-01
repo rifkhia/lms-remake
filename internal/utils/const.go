@@ -1,4 +1,5 @@
 package utils
 
-const STUDENT_ROLE = "student"
-const TEACHER_ROLE = "teacher"
+const STUDENT_ROLE = "STUDENT"
+const TEACHER_ROLE = "TEACHER"
+const LETTER_RUNES = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"

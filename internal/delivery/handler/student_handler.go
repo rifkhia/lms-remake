@@ -1,7 +1,6 @@
 package handler
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"github.com/rifkhia/lms-remake/internal/delivery/middleware"
@@ -10,7 +9,7 @@ import (
 )
 
 func (handler StudentHandlerImpl) Route(app *fiber.App) {
-	app.Get("/v1/student", middleware.JWTGuardStudent, handler.FetchStudent)
+	app.Get("/v1/student", middleware.JWTGuardStudent, handler.FetchStudentById)
 	app.Post("/v1/student", handler.RegisterStudent)
 	app.Post("/v1/student/login", handler.LoginStudent)
 }
@@ -19,36 +18,46 @@ type StudentHandlerImpl struct {
 	studentUsecase usecase.StudentUsecase
 }
 
-func (handler *StudentHandlerImpl) FetchStudent(c *fiber.Ctx) error {
-	var studentResult interface{}
-	var err error
+func (handler *StudentHandlerImpl) FetchStudentById(c *fiber.Ctx) error {
+	id, err := middleware.GetIdFromToken(c)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"messsage": err,
+		})
+	}
 
-	if c.Query("id") != "" {
-		param := c.Query("id")
-		id, err := uuid.Parse(param)
-		if err != nil {
-			return c.Status(fiber.StatusBadRequest).SendString(fmt.Sprintf("Wrong UUID"))
-		}
+	parseId, err := uuid.Parse(id)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"messsage": err,
+		})
+	}
 
-		studentResult, err = handler.studentUsecase.FetchStudentById(c.Context(), id)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(map[string]interface{}{
-				"message": err,
-			})
-		}
-	} else if c.Query("name") != "" {
-		param := c.Query("name")
+	studentResult, err := handler.studentUsecase.FetchStudentById(c.Context(), parseId)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(map[string]interface{}{
+			"message": err,
+		})
+	}
 
-		studentResult, err = handler.studentUsecase.FetchStudentByName(c.Context(), param)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(map[string]interface{}{
-				"message": err,
-			})
-		}
+	return c.JSON(map[string]interface{}{
+		"message": "Success fetching student data",
+		"data":    studentResult,
+	})
+}
 
-	} else {
-		return c.Status(fiber.StatusBadRequest).JSON(map[string]interface{}{
-			"message": "Insert id or name!",
+func (handler *StudentHandlerImpl) FetchStudentByName(c *fiber.Ctx) error {
+	param := c.Query("name")
+	if param == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "name cannot be blank!",
+		})
+	}
+
+	studentResult, err := handler.studentUsecase.FetchStudentByName(c.Context(), param)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(map[string]interface{}{
+			"message": err,
 		})
 	}
 
@@ -92,6 +101,11 @@ func (handler *StudentHandlerImpl) LoginStudent(c *fiber.Ctx) error {
 
 	data, err = handler.studentUsecase.Login(c.Context(), &request)
 	if err != nil {
+		if err.Error() == "Email not found!" {
+			return c.Status(fiber.StatusBadRequest).JSON(map[string]interface{}{
+				"message": err.Error(),
+			})
+		}
 		return c.Status(fiber.StatusInternalServerError).JSON(map[string]interface{}{
 			"message": err.Error(),
 		})

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"github.com/spf13/viper"
 	"time"
 )
 
@@ -25,13 +26,13 @@ func CreateAccessToken(user_id uuid.UUID, role string) (accessToken string, err 
 		ID:   user_id,
 		Role: role,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(GetIntEnv("EXPIRY")))),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(viper.GetInt("EXPIRY")))),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	t, err := token.SignedString([]byte(GetStrEnv("SECRET_JWT")))
+	t, err := token.SignedString([]byte(viper.GetString("SECRET_JWT")))
 	if err != nil {
 		return "", err
 	}
@@ -44,11 +45,11 @@ func CreateRefreshToken(user_id uuid.UUID, accessToken string, role string) (ref
 		Role:        role,
 		AccessToken: accessToken,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(GetIntEnv("EXPIRY")))),
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(viper.GetInt("EXPIRY")))),
 		},
 	}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claimsRefresh)
-	rt, err := token.SignedString([]byte(GetStrEnv("SECRET_JWT")))
+	rt, err := token.SignedString([]byte(viper.GetString("SECRET_JWT")))
 	if err != nil {
 		return "", err
 	}

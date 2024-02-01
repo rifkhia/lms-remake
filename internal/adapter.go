@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/lib/pq"
-	"os"
+	"github.com/spf13/viper"
 )
 
 func ConnectDatabase() *sqlx.DB {
@@ -15,14 +15,15 @@ func ConnectDatabase() *sqlx.DB {
 		dbName     string
 		dbServer   string
 	}{
-		dbUsername: os.Getenv("DB_USERNAME"),
-		dbPassword: os.Getenv("DB_PASSWORD"),
-		dbPort:     os.Getenv("DB_PORT"),
-		dbName:     os.Getenv("DB_NAME"),
-		dbServer:   os.Getenv("DB_SERVER"),
+		dbUsername: viper.GetString("DB_USERNAME"),
+		dbPassword: viper.GetString("DB_PASSWORD"),
+		dbPort:     viper.GetString("DB_PORT"),
+		dbName:     viper.GetString("DB_NAME"),
+		dbServer:   viper.GetString("DB_SERVER"),
 	}
 	if databaseServer.dbUsername == "" {
 		fmt.Println("error in connecting")
+
 	}
 	db, err := sqlx.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
 		databaseServer.dbUsername,

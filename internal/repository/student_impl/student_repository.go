@@ -50,6 +50,10 @@ func (r *StudentRepositoryImpl) GetStudentByEmail(c context.Context, email strin
 		}
 	}
 
+	if student.Email == "" {
+		return nil, errors.New("Email not found!")
+	}
+
 	err = rows.Err()
 
 	if err != nil {
@@ -67,13 +71,13 @@ func (r *StudentRepositoryImpl) GetStudentByName(c context.Context, name string)
 	defer rows.Close()
 
 	for rows.Next() {
-		student := models.Student{}
+		student := new(models.Student)
 		err := rows.StructScan(&student)
 		if err != nil {
 			return nil, err
 		}
 
-		students = append(students, &student)
+		students = append(students, student)
 	}
 
 	err = rows.Err()
@@ -89,6 +93,15 @@ func (r *StudentRepositoryImpl) CreateStudent(c context.Context, student *models
 	_, err := r.DB.NamedExecContext(c, "INSERT INTO students VALUES(:id, :name, :nim, :email, :password)", student)
 	if err != nil {
 		return errors.New("Failed to create student")
+	}
+
+	return nil
+}
+
+func (r *StudentRepositoryImpl) DeleteStudent(c context.Context, id uuid.UUID) error {
+	_, err := r.DB.NamedExecContext(c, "DELETE FROM students WHERE id = ?", id)
+	if err != nil {
+		return errors.New("Failed to delete student")
 	}
 
 	return nil
