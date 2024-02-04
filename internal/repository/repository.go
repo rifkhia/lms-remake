@@ -4,21 +4,30 @@ import (
 	"context"
 	"github.com/google/uuid"
 	"github.com/rifkhia/lms-remake/internal/models"
+	"github.com/rifkhia/lms-remake/internal/pkg"
 )
 
 type StudentRepository interface {
-	GetStudentByID(c context.Context, id uuid.UUID) (*models.Student, error)
-	GetStudentByEmail(c context.Context, email string) (*models.Student, error)
-	GetStudentByName(c context.Context, name string) ([]*models.Student, error)
-	CreateStudent(c context.Context, student *models.Student) error
+	GetStudentByID(c context.Context, id uuid.UUID) (*models.Student, pkg.CustomError)
+	GetStudentByEmail(c context.Context, email string) (*models.Student, pkg.CustomError)
+	GetStudentByName(c context.Context, name string) ([]*models.Student, pkg.CustomError)
+	CreateStudent(c context.Context, student *models.Student) pkg.CustomError
 }
 
 type ClassRepository interface {
-	GetClassByID(c context.Context, id int) (*models.Class, error)
-	GetClassByTeacherID(c context.Context, teacherId int) ([]*models.Class, error)
-	GetClassByName(c context.Context, name string) ([]*models.Class, error)
-	CreateClass(c context.Context, class *models.Class) error
-	DeleteClass(c context.Context, id int) error
-	JoinClass(c context.Context, classId int, studentId uuid.UUID) error
-	CheckStudentClassExists(c context.Context, classId int, studentId uuid.UUID) (bool, error)
+	GetClassByID(c context.Context, id int) (*models.Class, pkg.CustomError)
+	GetClassByTeacherID(c context.Context, teacherId int) ([]*models.Class, pkg.CustomError)
+	GetClassByName(c context.Context, name string) ([]*models.Class, pkg.CustomError)
+	CreateClass(c context.Context, class *models.Class) pkg.CustomError
+	DeleteClass(c context.Context, id int) pkg.CustomError
+	JoinClass(c context.Context, classId int, studentId uuid.UUID) pkg.CustomError
+	CheckStudentClassExists(c context.Context, classId int, studentId uuid.UUID) (bool, pkg.CustomError)
+	GetClassSectionByClassId(c context.Context, classId int) ([]*models.SectionClass, pkg.CustomError)
+	CreateClassSection(c context.Context, classSection *models.SectionClass) pkg.CustomError
+}
+
+type TeacherRepository interface {
+	GetTeacherByEmail(c context.Context, email string) (*models.Teacher, pkg.CustomError)
+	GetTeacherById(c context.Context, id uuid.UUID) (*models.Teacher, pkg.CustomError)
+	CreateTeacher(c context.Context, request *models.Teacher) pkg.CustomError
 }

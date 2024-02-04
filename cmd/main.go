@@ -8,6 +8,7 @@ import (
 	"github.com/rifkhia/lms-remake/internal/delivery/handler"
 	classRepository "github.com/rifkhia/lms-remake/internal/repository/class_impl"
 	studentRepository "github.com/rifkhia/lms-remake/internal/repository/student_impl"
+	teacherRepository "github.com/rifkhia/lms-remake/internal/repository/teacher_impl"
 	"github.com/rifkhia/lms-remake/internal/usecase"
 	"github.com/spf13/viper"
 )
@@ -31,16 +32,20 @@ func main() {
 
 	studentRepository := studentRepository.NewStudentRepository(database)
 	classRepository := classRepository.NewClassRepository(database)
+	teacherRepository := teacherRepository.NewTeacherRepository(database)
 	studentUsecase := usecase.NewStudentUsecase(studentRepository)
 	classUsecase := usecase.NewClassUsecase(classRepository)
+	teacherUsecase := usecase.NewTeacherUsecase(teacherRepository)
 	studentHandler := handler.NewStudentHandler(studentUsecase)
 	classHandler := handler.NewClassHandler(classUsecase)
+	teacherHandler := handler.NewTeacherHandler(teacherUsecase)
 	app := fiber.New()
 
 	app.Use(logger.New())
 
 	studentHandler.Route(app)
 	classHandler.Route(app)
+	teacherHandler.Route(app)
 
-	app.Listen(":8080")
+	app.Listen(":8081")
 }

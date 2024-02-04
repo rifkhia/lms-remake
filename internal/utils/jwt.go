@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	error2 "github.com/rifkhia/lms-remake/internal/pkg"
 	"github.com/spf13/viper"
 	"time"
 )
@@ -21,7 +22,7 @@ type JwtCustomRefreshClaims struct {
 	jwt.RegisteredClaims
 }
 
-func CreateAccessToken(user_id uuid.UUID, role string) (accessToken string, err error) {
+func CreateAccessToken(user_id uuid.UUID, role string) (accessToken string, custErr error2.CustomError) {
 	claims := &JwtCustomClaims{
 		ID:   user_id,
 		Role: role,
@@ -34,12 +35,17 @@ func CreateAccessToken(user_id uuid.UUID, role string) (accessToken string, err 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	t, err := token.SignedString([]byte(viper.GetString("SECRET_JWT")))
 	if err != nil {
-		return "", err
+		custErr = error2.CustomError{
+			Cause:   err,
+			Service: "Utils",
+			Code:    INTERNAL_SERVER_ERROR,
+		}
+		return "", custErr
 	}
-	return t, nil
+	return t, custErr
 }
 
-func CreateRefreshToken(user_id uuid.UUID, accessToken string, role string) (refreshToken string, err error) {
+func CreateRefreshToken(user_id uuid.UUID, accessToken string, role string) (refreshToken string, custErr error2.CustomError) {
 	claimsRefresh := &JwtCustomRefreshClaims{
 		ID:          user_id,
 		Role:        role,
@@ -51,9 +57,14 @@ func CreateRefreshToken(user_id uuid.UUID, accessToken string, role string) (ref
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claimsRefresh)
 	rt, err := token.SignedString([]byte(viper.GetString("SECRET_JWT")))
 	if err != nil {
-		return "", err
+		custErr = error2.CustomError{
+			Cause:   err,
+			Service: "Utils",
+			Code:    INTERNAL_SERVER_ERROR,
+		}
+		return "", custErr
 	}
-	return rt, err
+	return rt, custErr
 }
 
 func IsAuthorized(requestToken string, secret string) (bool, error) {

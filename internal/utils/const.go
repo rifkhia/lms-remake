@@ -3,3 +3,14 @@ package utils
 const STUDENT_ROLE = "STUDENT"
 const TEACHER_ROLE = "TEACHER"
 const LETTER_RUNES = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+
+// LIST CODE FOR ERROR
+const INTERNAL_SERVER_ERROR = 500
+const BAD_REQUEST = 400
+const FORBIDDEN = 403
+
+// LIST SERVICE
+const REPOSITORY_SERVICE = "repository"
+const MODEL_SERVICE = "models"
+const USECASE_SERVICE = "usecase"
+const HANDLER_SERVICE = "handler"

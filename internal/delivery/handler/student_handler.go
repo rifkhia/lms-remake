@@ -5,12 +5,14 @@ import (
 	"github.com/google/uuid"
 	"github.com/rifkhia/lms-remake/internal/delivery/middleware"
 	"github.com/rifkhia/lms-remake/internal/models"
+	"github.com/rifkhia/lms-remake/internal/pkg"
 	"github.com/rifkhia/lms-remake/internal/usecase"
+	"github.com/rifkhia/lms-remake/internal/utils"
 )
 
 func (handler StudentHandlerImpl) Route(app *fiber.App) {
 	app.Get("/v1/student", middleware.JWTGuardStudent, handler.FetchStudentById)
-	app.Post("/v1/student", handler.RegisterStudent)
+	app.Post("/v1/student/register", handler.RegisterStudent)
 	app.Post("/v1/student/login", handler.LoginStudent)
 }
 
@@ -21,23 +23,27 @@ type StudentHandlerImpl struct {
 func (handler *StudentHandlerImpl) FetchStudentById(c *fiber.Ctx) error {
 	id, err := middleware.GetIdFromToken(c)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"messsage": err,
-		})
+		customError := pkg.CustomError{
+			Code:    utils.BAD_REQUEST,
+			Cause:   err,
+			Service: utils.HANDLER_SERVICE,
+		}
+		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
 	parseId, err := uuid.Parse(id)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"messsage": err,
-		})
+		customError := pkg.CustomError{
+			Code:    utils.BAD_REQUEST,
+			Cause:   err,
+			Service: utils.HANDLER_SERVICE,
+		}
+		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
-	studentResult, err := handler.studentUsecase.FetchStudentById(c.Context(), parseId)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(map[string]interface{}{
-			"message": err,
-		})
+	studentResult, customError := handler.studentUsecase.FetchStudentById(c.Context(), parseId)
+	if customError.Cause != nil {
+		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
 	return c.JSON(map[string]interface{}{
@@ -54,11 +60,9 @@ func (handler *StudentHandlerImpl) FetchStudentByName(c *fiber.Ctx) error {
 		})
 	}
 
-	studentResult, err := handler.studentUsecase.FetchStudentByName(c.Context(), param)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(map[string]interface{}{
-			"message": err,
-		})
+	studentResult, customError := handler.studentUsecase.FetchStudentByName(c.Context(), param)
+	if customError.Cause != nil {
+		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
 	return c.JSON(map[string]interface{}{
@@ -68,19 +72,20 @@ func (handler *StudentHandlerImpl) FetchStudentByName(c *fiber.Ctx) error {
 }
 
 func (handler *StudentHandlerImpl) RegisterStudent(c *fiber.Ctx) error {
-	var request models.LoginRegisterRequest
+	var request models.StudentRegisterRequest
 	err := c.BodyParser(&request)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(map[string]interface{}{
-			"message": err,
-		})
+		customError := pkg.CustomError{
+			Code:    utils.BAD_REQUEST,
+			Cause:   err,
+			Service: utils.HANDLER_SERVICE,
+		}
+		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
-	data, err := handler.studentUsecase.Register(c.Context(), &request)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(map[string]interface{}{
-			"message": err,
-		})
+	data, customError := handler.studentUsecase.Register(c.Context(), &request)
+	if customError.Cause != nil {
+		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
 	return c.Status(fiber.StatusCreated).JSON(map[string]interface{}{
@@ -90,7 +95,7 @@ func (handler *StudentHandlerImpl) RegisterStudent(c *fiber.Ctx) error {
 }
 
 func (handler *StudentHandlerImpl) LoginStudent(c *fiber.Ctx) error {
-	var request models.LoginRegisterRequest
+	var request models.StudentLoginRequest
 	var data interface{}
 	err := c.BodyParser(&request)
 	if err != nil {
@@ -99,16 +104,9 @@ func (handler *StudentHandlerImpl) LoginStudent(c *fiber.Ctx) error {
 		})
 	}
 
-	data, err = handler.studentUsecase.Login(c.Context(), &request)
-	if err != nil {
-		if err.Error() == "Email not found!" {
-			return c.Status(fiber.StatusBadRequest).JSON(map[string]interface{}{
-				"message": err.Error(),
-			})
-		}
-		return c.Status(fiber.StatusInternalServerError).JSON(map[string]interface{}{
-			"message": err.Error(),
-		})
+	data, customError := handler.studentUsecase.Login(c.Context(), &request)
+	if customError.Error() != nil {
+		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
 	return c.Status(fiber.StatusOK).JSON(map[string]interface{}{
