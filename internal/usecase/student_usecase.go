@@ -15,6 +15,7 @@ type StudentUsecase interface {
 	FetchStudentByName(c context.Context, name string) ([]*models.Student, pkg.CustomError)
 	Register(c context.Context, student *models.StudentRegisterRequest) (interface{}, pkg.CustomError)
 	Login(c context.Context, request *models.StudentLoginRequest) (interface{}, pkg.CustomError)
+	DeleteStudent(c context.Context, id uuid.UUID) pkg.CustomError
 }
 
 type StudentUsecaseImpl struct {
@@ -45,16 +46,6 @@ func (s *StudentUsecaseImpl) Register(c context.Context, student *models.Student
 	if err.Cause != nil {
 		return nil, err
 	}
-
-	//studentCheck, err := s.studentRepo.GetStudentByEmail(c, student.Email)
-	//if studentCheck == nil {
-	//	customError := pkg.CustomError{
-	//		Cause:   errors.New("email already exists"),
-	//		Code:    utils.BAD_REQUEST,
-	//		Service: utils.USECASE_SERVICE,
-	//	}
-	//	return nil, customError
-	//}
 
 	err = s.studentRepo.CreateStudent(c, studentRequest)
 	if err.Cause != nil {
@@ -110,6 +101,15 @@ func (s *StudentUsecaseImpl) Login(c context.Context, request *models.StudentLog
 		"Access token":  accessToken,
 		"Refresh token": refreshToken,
 	}, pkg.CustomError{}
+}
+
+func (s *StudentUsecaseImpl) DeleteStudent(c context.Context, id uuid.UUID) pkg.CustomError {
+	customError := s.studentRepo.DeleteStudent(c, id)
+	if customError.Cause != nil {
+		return customError
+	}
+
+	return pkg.CustomError{}
 }
 
 func NewStudentUsecase(repo repository.StudentRepository) StudentUsecase {

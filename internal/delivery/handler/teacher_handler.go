@@ -15,7 +15,6 @@ type TeacherHandlerImpl struct {
 func (handler TeacherHandlerImpl) Route(app *fiber.App) {
 	app.Post("/v1/teacher/login", handler.LoginTeacher)
 	app.Post("/v1/teacher/register", handler.RegisterTeacher)
-
 }
 
 func (handler *TeacherHandlerImpl) LoginTeacher(c *fiber.Ctx) error {

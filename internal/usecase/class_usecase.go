@@ -14,13 +14,15 @@ type ClassUsecase interface {
 	FetchClassById(c context.Context, id int) (*models.Class, pkg.CustomError)
 	FetchClassByTeacherId(c context.Context, teacherId int) ([]*models.Class, pkg.CustomError)
 	FetchClassByName(c context.Context, name string) ([]*models.Class, pkg.CustomError)
-	CreateClass(c context.Context, request *models.Class) pkg.CustomError
+	CreateClass(c context.Context, request *models.ClassCreate, teacherId uuid.UUID) pkg.CustomError
 	JoinClass(c context.Context, studentId uuid.UUID, classId int, key string) pkg.CustomError
+	LeftClass(c context.Context, classId int, studentId uuid.UUID) pkg.CustomError
 	CreateSectionClass(c context.Context, request *models.SectionClass) pkg.CustomError
 }
 
 type classUsecaseImpl struct {
-	classRepo repository.ClassRepository
+	classRepo   repository.ClassRepository
+	studentRepo repository.StudentRepository
 }
 
 func (s *classUsecaseImpl) FetchClassById(c context.Context, id int) (*models.Class, pkg.CustomError) {
@@ -34,7 +36,13 @@ func (s *classUsecaseImpl) FetchClassById(c context.Context, id int) (*models.Cl
 		return nil, err
 	}
 
+	students, err := s.studentRepo.GetStudentByClassId(c, id)
+	if err.Cause != nil {
+		return nil, err
+	}
+
 	classResult.ClassSection = classSection
+	classResult.Student = students
 
 	return classResult, pkg.CustomError{}
 }
@@ -57,10 +65,10 @@ func (s *classUsecaseImpl) FetchClassByName(c context.Context, name string) ([]*
 	return classResult, pkg.CustomError{}
 }
 
-func (s *classUsecaseImpl) CreateClass(c context.Context, request *models.Class) pkg.CustomError {
-	request.Key = utils.GenerateClassKey(8)
+func (s *classUsecaseImpl) CreateClass(c context.Context, request *models.ClassCreate, teacherId uuid.UUID) pkg.CustomError {
+	class := request.NewClass(teacherId)
 
-	err := s.classRepo.CreateClass(c, request)
+	err := s.classRepo.CreateClass(c, &class)
 	if err.Cause != nil {
 		return err
 	}
@@ -112,8 +120,18 @@ func (s *classUsecaseImpl) CreateSectionClass(c context.Context, request *models
 	return pkg.CustomError{}
 }
 
-func NewClassUsecase(repo repository.ClassRepository) ClassUsecase {
+func (s *classUsecaseImpl) LeftClass(c context.Context, classId int, studentId uuid.UUID) pkg.CustomError {
+	customError := s.classRepo.LeftCLass(c, classId, studentId)
+	if customError.Cause != nil {
+		return customError
+	}
+
+	return pkg.CustomError{}
+}
+
+func NewClassUsecase(classRepo repository.ClassRepository, studentRepo repository.StudentRepository) ClassUsecase {
 	return &classUsecaseImpl{
-		classRepo: repo,
+		classRepo:   classRepo,
+		studentRepo: studentRepo,
 	}
 }

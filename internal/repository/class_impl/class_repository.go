@@ -2,6 +2,7 @@ package class_impl
 
 import (
 	"context"
+	"errors"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 	"github.com/rifkhia/lms-remake/internal/models"
@@ -42,19 +43,24 @@ func (r *ClassRepositoryImpl) GetClassByID(c context.Context, id int) (*models.C
 
 	defer rows.Close()
 
-	for rows.Next() {
-		err := rows.StructScan(&class)
-		if err != nil {
-			return nil, pkg.CustomError{
-				Cause:   err,
-				Service: utils.REPOSITORY_SERVICE,
-				Code:    utils.INTERNAL_SERVER_ERROR,
-			}
+	if !rows.Next() {
+		return nil, pkg.CustomError{
+			Cause:   errors.New("no class with that id"),
+			Service: utils.REPOSITORY_SERVICE,
+			Code:    utils.INTERNAL_SERVER_ERROR,
+		}
+	}
+
+	err = rows.StructScan(&class)
+	if err != nil {
+		return nil, pkg.CustomError{
+			Cause:   err,
+			Service: utils.REPOSITORY_SERVICE,
+			Code:    utils.INTERNAL_SERVER_ERROR,
 		}
 	}
 
 	err = rows.Err()
-
 	if err != nil {
 		return nil, pkg.CustomError{
 			Cause:   err,
@@ -149,7 +155,7 @@ func (r *ClassRepositoryImpl) GetClassByName(c context.Context, name string) ([]
 }
 
 func (r *ClassRepositoryImpl) CreateClass(c context.Context, class *models.Class) pkg.CustomError {
-	_, err := r.DB.NamedExecContext(c, "INSERT INTO classes VALUES(:id, :name, :description, :key, :teacher_id, now(), now(), null)", class)
+	_, err := r.DB.NamedExecContext(c, "INSERT INTO classes VALUES(:id, :name, :description, :key, :teacherid, now(), now(), null)", class)
 	if err != nil {
 		return pkg.CustomError{
 			Cause:   err,
@@ -167,6 +173,23 @@ func (r *ClassRepositoryImpl) JoinClass(c context.Context, classId int, studentI
 		"studentId": studentId,
 	}
 	_, err := r.DB.NamedExecContext(c, "INSERT INTO student_class(student_id, class_id, created_at) VALUES(:studentId, :classId, now())", tempMap)
+	if err != nil {
+		return pkg.CustomError{
+			Cause:   err,
+			Service: utils.REPOSITORY_SERVICE,
+			Code:    utils.INTERNAL_SERVER_ERROR,
+		}
+	}
+
+	return pkg.CustomError{}
+}
+
+func (r *ClassRepositoryImpl) LeftCLass(c context.Context, classId int, studentId uuid.UUID) pkg.CustomError {
+	tempMap := map[string]interface{}{
+		"classId":   classId,
+		"studentId": studentId,
+	}
+	_, err := r.DB.NamedExecContext(c, "UPDATE student_class SET deleted_at = now() WHERE student_id = :studentid AND class_id = :classid", tempMap)
 	if err != nil {
 		return pkg.CustomError{
 			Cause:   err,

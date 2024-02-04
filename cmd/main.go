@@ -34,7 +34,7 @@ func main() {
 	classRepository := classRepository.NewClassRepository(database)
 	teacherRepository := teacherRepository.NewTeacherRepository(database)
 	studentUsecase := usecase.NewStudentUsecase(studentRepository)
-	classUsecase := usecase.NewClassUsecase(classRepository)
+	classUsecase := usecase.NewClassUsecase(classRepository, studentRepository)
 	teacherUsecase := usecase.NewTeacherUsecase(teacherRepository)
 	studentHandler := handler.NewStudentHandler(studentUsecase)
 	classHandler := handler.NewClassHandler(classUsecase)

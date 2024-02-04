@@ -12,6 +12,8 @@ type StudentRepository interface {
 	GetStudentByEmail(c context.Context, email string) (*models.Student, pkg.CustomError)
 	GetStudentByName(c context.Context, name string) ([]*models.Student, pkg.CustomError)
 	CreateStudent(c context.Context, student *models.Student) pkg.CustomError
+	DeleteStudent(c context.Context, id uuid.UUID) pkg.CustomError
+	GetStudentByClassId(c context.Context, classId int) ([]*models.StudentClass, pkg.CustomError)
 }
 
 type ClassRepository interface {
@@ -21,6 +23,7 @@ type ClassRepository interface {
 	CreateClass(c context.Context, class *models.Class) pkg.CustomError
 	DeleteClass(c context.Context, id int) pkg.CustomError
 	JoinClass(c context.Context, classId int, studentId uuid.UUID) pkg.CustomError
+	LeftCLass(c context.Context, classId int, studentId uuid.UUID) pkg.CustomError
 	CheckStudentClassExists(c context.Context, classId int, studentId uuid.UUID) (bool, pkg.CustomError)
 	GetClassSectionByClassId(c context.Context, classId int) ([]*models.SectionClass, pkg.CustomError)
 	CreateClassSection(c context.Context, classSection *models.SectionClass) pkg.CustomError

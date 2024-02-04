@@ -183,6 +183,33 @@ func (r *StudentRepositoryImpl) GetStudentByName(c context.Context, name string)
 	}
 }
 
+func (r *StudentRepositoryImpl) GetStudentByClassId(c context.Context, classId int) ([]*models.StudentClass, pkg.CustomError) {
+	var students []*models.StudentClass
+	rows, err := r.DB.QueryxContext(c, "SELECT students.id, students.name FROM students INNER JOIN public.student_class sc on students.id = sc.student_id WHERE sc.class_id = $1", classId)
+	if err != nil {
+		return nil, pkg.CustomError{
+			Code:    utils.INTERNAL_SERVER_ERROR,
+			Cause:   err,
+			Service: utils.REPOSITORY_SERVICE,
+		}
+	}
+
+	for rows.Next() {
+		student := new(models.StudentClass)
+		err = rows.StructScan(&student)
+		if err != nil {
+			return nil, pkg.CustomError{
+				Code:    utils.INTERNAL_SERVER_ERROR,
+				Cause:   err,
+				Service: utils.REPOSITORY_SERVICE,
+			}
+		}
+		students = append(students, student)
+	}
+
+	return students, pkg.CustomError{}
+}
+
 func (r *StudentRepositoryImpl) CreateStudent(c context.Context, student *models.Student) pkg.CustomError {
 	_, err := r.DB.NamedExecContext(c, "INSERT INTO students VALUES(:id, :name, :nim, :email, :password, now(), now(), null)", student)
 	if err != nil {

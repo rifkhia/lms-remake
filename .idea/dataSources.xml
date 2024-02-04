@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="lms_remake@localhost" uuid="5f1b8d42-ee63-4838-8a9a-4b61460bebcb">
+    <data-source source="LOCAL" name="lms-remake@localhost" uuid="69914ec6-d3a1-416d-a30c-385ed3f1c8d6">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://localhost:5432/lms_remake</jdbc-url>
+      <jdbc-url>jdbc:postgresql://localhost:5432/lms-remake</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

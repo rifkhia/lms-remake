@@ -20,7 +20,8 @@ type ClassHandlerImpl struct {
 func (handler ClassHandlerImpl) Route(app *fiber.App) {
 	app.Get("/v1/class/:id", middleware.JWTGuardAll, handler.FetchClassById)
 	app.Get("/v1/class", middleware.JWTGuardAll, handler.FetchClassByName)
-	app.Post("/v1/class/join", middleware.JWTGuardStudent, handler.StudentJoinClass)
+	app.Post("v1/class", middleware.JWTGuardTeacher, handler.CreateClass)
+	app.Post("/v1/class/:id/join", middleware.JWTGuardStudent, handler.StudentJoinClass)
 	app.Post("v1/class/:id/section", middleware.JWTGuardTeacher, handler.CreateClassSection)
 }
 
@@ -69,23 +70,28 @@ func (handler *ClassHandlerImpl) FetchClassByName(c *fiber.Ctx) error {
 	})
 }
 
-func (handler *ClassHandlerImpl) StudentJoinClass(c *fiber.Ctx) error {
-	studentId, err := middleware.GetIdFromToken(c)
+func (handler *ClassHandlerImpl) CreateClass(c *fiber.Ctx) error {
+	var request *models.ClassCreate
+	teacherId, err := middleware.GetIdFromToken(c)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"messsage": err.Error(),
-		})
+		customError := pkg.CustomError{
+			Code:    utils.INTERNAL_SERVER_ERROR,
+			Cause:   err,
+			Service: utils.HANDLER_SERVICE,
+		}
+		return c.Status(customError.Code).JSON(customError.Error())
 	}
-	parsedStudentId, err := uuid.Parse(studentId)
+
+	parsedTeacherId, err := uuid.Parse(teacherId)
 	if err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"messsage": err.Error(),
-		})
+		customError := pkg.CustomError{
+			Code:    utils.INTERNAL_SERVER_ERROR,
+			Cause:   err,
+			Service: utils.HANDLER_SERVICE,
+		}
+		return c.Status(customError.Code).JSON(customError.Error())
 	}
-	request := struct {
-		Id  int    `json:"id"`
-		Key string `json:"key"`
-	}{}
+
 	err = c.BodyParser(&request)
 	if err != nil {
 		customError := pkg.CustomError{
@@ -96,7 +102,53 @@ func (handler *ClassHandlerImpl) StudentJoinClass(c *fiber.Ctx) error {
 		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
-	customError := handler.classUsecase.JoinClass(c.Context(), parsedStudentId, request.Id, request.Key)
+	customError := handler.classUsecase.CreateClass(c.Context(), request, parsedTeacherId)
+	if customError.Cause != nil {
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
+		"message": "class created",
+	})
+}
+
+func (handler *ClassHandlerImpl) StudentJoinClass(c *fiber.Ctx) error {
+	param := c.Params("id")
+	if param == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "class id cannot be blank!",
+		})
+	}
+
+	intId, _ := strconv.Atoi(param)
+
+	studentId, err := middleware.GetIdFromToken(c)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"messsage": err.Error(),
+		})
+	}
+
+	parsedStudentId, err := uuid.Parse(studentId)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"messsage": err.Error(),
+		})
+	}
+	request := struct {
+		Key string `json:"key"`
+	}{}
+	err = c.BodyParser(&request)
+	if err != nil {
+		customError := pkg.CustomError{
+			Code:    utils.UNPROCESSABLE_ENTITY,
+			Cause:   err,
+			Service: utils.HANDLER_SERVICE,
+		}
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	customError := handler.classUsecase.JoinClass(c.Context(), parsedStudentId, intId, request.Key)
 	if customError.Cause != nil {
 		return c.Status(customError.Code).JSON(customError.Error())
 	}
@@ -139,13 +191,27 @@ func (handler *ClassHandlerImpl) CreateClassSection(c *fiber.Ctx) error {
 		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
-	if class.TeacherId != teacherId {
+	parseTeacherId, err := uuid.Parse(teacherId)
+	if err != nil {
+		customError := pkg.CustomError{
+			Code:    utils.INTERNAL_SERVER_ERROR,
+			Cause:   err,
+			Service: utils.HANDLER_SERVICE,
+		}
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	if class.TeacherId != parseTeacherId {
 		customError = pkg.CustomError{
 			Code:    utils.FORBIDDEN,
 			Cause:   errors.New("you don't have authority to this class"),
 			Service: utils.HANDLER_SERVICE,
 		}
-		return c.Status(customError.Code).JSON(customError.Error())
+		return c.Status(customError.Code).JSON(fiber.Map{
+			"1": class,
+			"2": parseTeacherId,
+			"3": request.ClassId,
+		})
 	}
 
 	customError = handler.classUsecase.CreateSectionClass(c.Context(), &request)

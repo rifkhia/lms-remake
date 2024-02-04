@@ -16,6 +16,11 @@ type Student struct {
 	Password string    `json:"-"`
 }
 
+type StudentClass struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+}
+
 type StudentLoginRequest struct {
 	NIM      string `json:"NIM"`
 	Email    string `json:"email"`

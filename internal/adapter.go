@@ -25,7 +25,7 @@ func ConnectDatabase() *sqlx.DB {
 		fmt.Println("error in connecting")
 
 	}
-	db, err := sqlx.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s:%s/%s",
+	db, err := sqlx.Open("postgres", fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable",
 		databaseServer.dbUsername,
 		databaseServer.dbPassword,
 		databaseServer.dbServer,
