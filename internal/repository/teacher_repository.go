@@ -1,4 +1,4 @@
-package teacher_impl
+package repository
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/rifkhia/lms-remake/internal/models"
 	error2 "github.com/rifkhia/lms-remake/internal/pkg"
-	"github.com/rifkhia/lms-remake/internal/repository"
 	"github.com/rifkhia/lms-remake/internal/utils"
 	"strings"
 )
@@ -65,7 +64,7 @@ func (r *TeacherRepositoryImpl) GetTeacherById(c context.Context, id uuid.UUID) 
 func (r *TeacherRepositoryImpl) GetTeacherByEmail(c context.Context, email string) (*models.Teacher, error2.CustomError) {
 	var teacher models.Teacher
 
-	rows, err := r.DB.QueryxContext(c, "SELECT * FROM teachers WHERE email = $1 AND deleted_at IS NULL", email)
+	rows, err := r.DB.QueryxContext(c, "SELECT id, name, npm, email, password FROM teachers WHERE email = $1 AND deleted_at IS NULL", email)
 
 	defer rows.Close()
 
@@ -84,19 +83,16 @@ func (r *TeacherRepositoryImpl) GetTeacherByEmail(c context.Context, email strin
 		}
 	}
 
-	for rows.Next() {
-		err := rows.StructScan(&teacher)
-		if err != nil {
-			return nil, error2.CustomError{
-				Code:    utils.INTERNAL_SERVER_ERROR,
-				Cause:   err,
-				Service: utils.REPOSITORY_SERVICE,
-			}
+	err = rows.StructScan(&teacher)
+	if err != nil {
+		return nil, error2.CustomError{
+			Code:    utils.INTERNAL_SERVER_ERROR,
+			Cause:   err,
+			Service: utils.REPOSITORY_SERVICE,
 		}
 	}
 
 	err = rows.Err()
-
 	if err != nil {
 		return nil, error2.CustomError{
 			Code:    utils.INTERNAL_SERVER_ERROR,
@@ -130,7 +126,7 @@ func (r *TeacherRepositoryImpl) CreateTeacher(c context.Context, request *models
 	return error2.CustomError{}
 }
 
-func NewTeacherRepository(db *sqlx.DB) repository.TeacherRepository {
+func NewTeacherRepository(db *sqlx.DB) TeacherRepository {
 	return &TeacherRepositoryImpl{
 		DB: db,
 	}

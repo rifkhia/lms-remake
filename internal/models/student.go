@@ -6,6 +6,7 @@ import (
 	"github.com/rifkhia/lms-remake/internal/pkg"
 	"github.com/rifkhia/lms-remake/internal/utils"
 	"net/mail"
+	"time"
 )
 
 type Student struct {
@@ -16,9 +17,35 @@ type Student struct {
 	Password string    `json:"-"`
 }
 
+type StudentProfile struct {
+	ID          uuid.UUID `json:"id"`
+	Name        string    `json:"name"`
+	NIM         int       `json:"NIM"`
+	Email       string    `json:"email"`
+	DateOfBirth time.Time `json:"date_of_birth"`
+	Gender      string    `json:"gender"`
+	Address     string    `json:"address"`
+	Phone       string    `json:"phone"`
+}
+
+type StudentProfileRequest struct {
+	ID          uuid.UUID `json:"ID"`
+	DateOfBirth time.Time `json:"date_of_birth"`
+	Gender      string    `json:"gender"`
+	Address     string    `json:"address"`
+	Phone       string    `json:"phone"`
+}
+
 type StudentClass struct {
 	ID   uuid.UUID `json:"id"`
 	Name string    `json:"name"`
+}
+
+type StudentSchedule struct {
+	ClassName string    `json:"class_name"`
+	Day       string    `json:"date"`
+	StartTime time.Time `json:"start_time"`
+	EndTime   time.Time `json:"end_time"`
 }
 
 type StudentLoginRequest struct {
@@ -32,6 +59,25 @@ type StudentRegisterRequest struct {
 	NIM      int    `json:"NIM"`
 	Email    string `json:"email"`
 	Password string `json:"password"`
+}
+
+func (s *StudentProfileRequest) UpdateStudent(student *StudentProfileRequest) {
+	if s.Address != "" {
+		student.Address = s.Address
+	}
+
+	if s.DateOfBirth.IsZero() {
+		student.DateOfBirth = s.DateOfBirth
+	}
+
+	if s.Gender != "" {
+		student.Gender = s.Gender
+	}
+
+	if s.Phone != "" {
+		student.Phone = s.Phone
+	}
+
 }
 
 func (s *StudentRegisterRequest) NewStudent() (*Student, pkg.CustomError) {

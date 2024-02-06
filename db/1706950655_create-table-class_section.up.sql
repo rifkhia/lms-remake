@@ -6,5 +6,7 @@ CREATE TABLE class_sections (
     class_id int REFERENCES classes,
     created_at TIMESTAMP NOT NULL ,
     updated_at TIMESTAMP NOT NULL ,
-    deleted_at TIMESTAMP
+    deleted_at TIMESTAMP,
+
+    CONSTRAINT uc_class_order UNIQUE (class_id, "order")
 )

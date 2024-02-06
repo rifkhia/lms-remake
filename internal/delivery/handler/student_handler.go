@@ -12,6 +12,7 @@ import (
 
 func (handler StudentHandlerImpl) Route(app *fiber.App) {
 	app.Get("/v1/student/profile", middleware.JWTGuardStudent, handler.FetchStudentById)
+	app.Put("/v1/student/profile", middleware.JWTGuardStudent, handler.EditStudent)
 	app.Post("/v1/student/register", handler.RegisterStudent)
 	app.Post("/v1/student/login", handler.LoginStudent)
 	app.Delete("/v1/student", middleware.JWTGuardStudent, handler.DeleteStudent)
@@ -106,7 +107,7 @@ func (handler *StudentHandlerImpl) LoginStudent(c *fiber.Ctx) error {
 	}
 
 	data, customError := handler.studentUsecase.Login(c.Context(), &request)
-	if customError.Error() != nil {
+	if customError.Cause != nil {
 		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
@@ -145,6 +146,39 @@ func (handler *StudentHandlerImpl) DeleteStudent(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "account deleted",
 	})
+}
+
+func (handler *StudentHandlerImpl) EditStudent(c *fiber.Ctx) error {
+	var request *models.StudentProfileRequest
+	id, err := middleware.GetIdFromToken(c)
+	if err != nil {
+		customError := pkg.CustomError{
+			Code:    utils.BAD_REQUEST,
+			Cause:   err,
+			Service: utils.HANDLER_SERVICE,
+		}
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	err = c.BodyParser(&request)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(map[string]interface{}{
+			"message": err.Error(),
+		})
+	}
+
+	request.ID, err = uuid.Parse(id)
+
+	customError := handler.studentUsecase.EditProfileStudent(c.Context(), request)
+	if customError.Cause != nil {
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "profile updated",
+		"data":    request,
+	})
+
 }
 
 func NewStudentHandler(studentUsecase usecase.StudentUsecase) *StudentHandlerImpl {

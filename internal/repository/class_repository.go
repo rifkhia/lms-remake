@@ -1,4 +1,4 @@
-package class_impl
+package repository
 
 import (
 	"context"
@@ -7,7 +7,6 @@ import (
 	"github.com/jmoiron/sqlx"
 	"github.com/rifkhia/lms-remake/internal/models"
 	"github.com/rifkhia/lms-remake/internal/pkg"
-	"github.com/rifkhia/lms-remake/internal/repository"
 	"github.com/rifkhia/lms-remake/internal/utils"
 )
 
@@ -116,7 +115,7 @@ func (r *ClassRepositoryImpl) GetClassByTeacherID(c context.Context, teacherId i
 func (r *ClassRepositoryImpl) GetClassByName(c context.Context, name string) ([]*models.Class, pkg.CustomError) {
 	var classes []*models.Class
 
-	rows, err := r.DB.QueryxContext(c, "SELECT * FROM classes WHERE name LIKE $1 AND deleted_at IS NULL", name)
+	rows, err := r.DB.QueryxContext(c, "SELECT id, id, name, description, key, teacher_id AS teacherid FROM classes WHERE name LIKE '%'||$1||'%' AND deleted_at IS NULL", name)
 	if err != nil {
 		return nil, pkg.CustomError{
 			Cause:   err,
@@ -155,7 +154,7 @@ func (r *ClassRepositoryImpl) GetClassByName(c context.Context, name string) ([]
 }
 
 func (r *ClassRepositoryImpl) CreateClass(c context.Context, class *models.Class) pkg.CustomError {
-	_, err := r.DB.NamedExecContext(c, "INSERT INTO classes VALUES(:id, :name, :description, :key, :teacherid, now(), now(), null)", class)
+	_, err := r.DB.NamedExecContext(c, "INSERT INTO classes VALUES(DEFAULT, :name, :description, :key, :teacherid, now(), now(), null, :day, :starttime, :endtime)", class)
 	if err != nil {
 		return pkg.CustomError{
 			Cause:   err,
@@ -266,7 +265,11 @@ func (r *ClassRepositoryImpl) GetClassSectionByClassId(c context.Context, classI
 	return classSections, pkg.CustomError{}
 }
 
-func NewClassRepository(db *sqlx.DB) repository.ClassRepository {
+//func (r *ClassRepositoryImpl) InsertSubmissionTeacher(c context.Context, classSectionId int, linkFile string) pkg.CustomError {
+//	_, err := r.DB.NamedExecContext("INSERT INTO submissions VALUES (DEFAULT, )")
+//}
+
+func NewClassRepository(db *sqlx.DB) ClassRepository {
 	return &ClassRepositoryImpl{
 		DB: db,
 	}

@@ -66,9 +66,12 @@ func (s *classUsecaseImpl) FetchClassByName(c context.Context, name string) ([]*
 }
 
 func (s *classUsecaseImpl) CreateClass(c context.Context, request *models.ClassCreate, teacherId uuid.UUID) pkg.CustomError {
-	class := request.NewClass(teacherId)
+	class, err := request.NewClass(teacherId)
+	if err.Cause != nil {
+		return err
+	}
 
-	err := s.classRepo.CreateClass(c, &class)
+	err = s.classRepo.CreateClass(c, class)
 	if err.Cause != nil {
 		return err
 	}

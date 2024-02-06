@@ -14,6 +14,10 @@ type StudentRepository interface {
 	CreateStudent(c context.Context, student *models.Student) pkg.CustomError
 	DeleteStudent(c context.Context, id uuid.UUID) pkg.CustomError
 	GetStudentByClassId(c context.Context, classId int) ([]*models.StudentClass, pkg.CustomError)
+	GetStudentProfile(c context.Context, id uuid.UUID) (*models.StudentProfileRequest, pkg.CustomError)
+	AddStudentProfile(c context.Context, student *models.StudentProfileRequest) pkg.CustomError
+	EditStudentProfile(c context.Context, student *models.StudentProfileRequest) pkg.CustomError
+	FetchStudentClass(c context.Context, id uuid.UUID) ([]*models.StudentSchedule, pkg.CustomError)
 }
 
 type ClassRepository interface {

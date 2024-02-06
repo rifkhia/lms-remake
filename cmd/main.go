@@ -6,11 +6,10 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/rifkhia/lms-remake/internal"
 	"github.com/rifkhia/lms-remake/internal/delivery/handler"
-	classRepository "github.com/rifkhia/lms-remake/internal/repository/class_impl"
-	studentRepository "github.com/rifkhia/lms-remake/internal/repository/student_impl"
-	teacherRepository "github.com/rifkhia/lms-remake/internal/repository/teacher_impl"
+	"github.com/rifkhia/lms-remake/internal/repository"
 	"github.com/rifkhia/lms-remake/internal/usecase"
 	"github.com/spf13/viper"
+	storage_go "github.com/supabase-community/storage-go"
 )
 
 func initViperConfig() {
@@ -25,14 +24,18 @@ func initViperConfig() {
 	}
 }
 
+func initSupabaseStorage() {
+	storageClient := storage_go.NewClient("https://sfiaqorbwfekbitsqvsf.supabase.co/storage/v1", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmaWFxb3Jid2Zla2JpdHNxdnNmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MDcxNTYzNzMsImV4cCI6MjAyMjczMjM3M30.-_P0sYfzdbgeoHvXAm0AmFpUiv3n7feqQWQq1N22MoA", nil)
+}
+
 func main() {
 	initViperConfig()
 
 	database := internal.ConnectDatabase()
 
-	studentRepository := studentRepository.NewStudentRepository(database)
-	classRepository := classRepository.NewClassRepository(database)
-	teacherRepository := teacherRepository.NewTeacherRepository(database)
+	studentRepository := repository.NewStudentRepository(database)
+	classRepository := repository.NewClassRepository(database)
+	teacherRepository := repository.NewTeacherRepository(database)
 	studentUsecase := usecase.NewStudentUsecase(studentRepository)
 	classUsecase := usecase.NewClassUsecase(classRepository, studentRepository)
 	teacherUsecase := usecase.NewTeacherUsecase(teacherRepository)
