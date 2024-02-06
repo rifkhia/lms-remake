@@ -265,9 +265,18 @@ func (r *ClassRepositoryImpl) GetClassSectionByClassId(c context.Context, classI
 	return classSections, pkg.CustomError{}
 }
 
-//func (r *ClassRepositoryImpl) InsertSubmissionTeacher(c context.Context, classSectionId int, linkFile string) pkg.CustomError {
-//	_, err := r.DB.NamedExecContext("INSERT INTO submissions VALUES (DEFAULT, )")
-//}
+func (r *ClassRepositoryImpl) InsertSubmissionTeacher(c context.Context, request *models.Submission) pkg.CustomError {
+	_, err := r.DB.NamedExecContext(c, "INSERT INTO submissions VALUES (DEFAULT, :title, :file, :classsectionid, now(), now(), null)", request)
+	if err != nil {
+		return pkg.CustomError{
+			Cause:   err,
+			Code:    utils.INTERNAL_SERVER_ERROR,
+			Service: utils.REPOSITORY_SERVICE,
+		}
+	}
+
+	return pkg.CustomError{}
+}
 
 func NewClassRepository(db *sqlx.DB) ClassRepository {
 	return &ClassRepositoryImpl{

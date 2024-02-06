@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"github.com/google/uuid"
+	"github.com/rifkhia/lms-remake/internal/dto"
 	"github.com/rifkhia/lms-remake/internal/models"
 	"github.com/rifkhia/lms-remake/internal/pkg"
 )
@@ -14,9 +15,9 @@ type StudentRepository interface {
 	CreateStudent(c context.Context, student *models.Student) pkg.CustomError
 	DeleteStudent(c context.Context, id uuid.UUID) pkg.CustomError
 	GetStudentByClassId(c context.Context, classId int) ([]*models.StudentClass, pkg.CustomError)
-	GetStudentProfile(c context.Context, id uuid.UUID) (*models.StudentProfileRequest, pkg.CustomError)
-	AddStudentProfile(c context.Context, student *models.StudentProfileRequest) pkg.CustomError
-	EditStudentProfile(c context.Context, student *models.StudentProfileRequest) pkg.CustomError
+	GetStudentProfile(c context.Context, id uuid.UUID) (*dto.StudentProfileRequest, pkg.CustomError)
+	AddStudentProfile(c context.Context, student *dto.StudentProfileRequest) pkg.CustomError
+	EditStudentProfile(c context.Context, student *dto.StudentProfileRequest) pkg.CustomError
 	FetchStudentClass(c context.Context, id uuid.UUID) ([]*models.StudentSchedule, pkg.CustomError)
 }
 
@@ -31,6 +32,7 @@ type ClassRepository interface {
 	CheckStudentClassExists(c context.Context, classId int, studentId uuid.UUID) (bool, pkg.CustomError)
 	GetClassSectionByClassId(c context.Context, classId int) ([]*models.SectionClass, pkg.CustomError)
 	CreateClassSection(c context.Context, classSection *models.SectionClass) pkg.CustomError
+	InsertSubmissionTeacher(c context.Context, request *models.Submission) pkg.CustomError
 }
 
 type TeacherRepository interface {

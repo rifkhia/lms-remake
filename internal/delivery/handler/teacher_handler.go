@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/rifkhia/lms-remake/internal/models"
+	"github.com/rifkhia/lms-remake/internal/dto"
 	"github.com/rifkhia/lms-remake/internal/pkg"
 	"github.com/rifkhia/lms-remake/internal/usecase"
 	"github.com/rifkhia/lms-remake/internal/utils"
@@ -18,7 +18,7 @@ func (handler TeacherHandlerImpl) Route(app *fiber.App) {
 }
 
 func (handler *TeacherHandlerImpl) LoginTeacher(c *fiber.Ctx) error {
-	var request models.TeacherLoginRequest
+	var request dto.TeacherLoginRequest
 	var data interface{}
 
 	err := c.BodyParser(&request)
@@ -52,7 +52,7 @@ func (handler *TeacherHandlerImpl) LoginTeacher(c *fiber.Ctx) error {
 }
 
 func (handler *TeacherHandlerImpl) RegisterTeacher(c *fiber.Ctx) error {
-	var request models.TeacherRegisterRequest
+	var request dto.TeacherRegisterRequest
 	err := c.BodyParser(&request)
 	if err != nil {
 		customError := pkg.CustomError{

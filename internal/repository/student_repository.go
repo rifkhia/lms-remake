@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/rifkhia/lms-remake/internal/dto"
 	"github.com/rifkhia/lms-remake/internal/models"
 	"github.com/rifkhia/lms-remake/internal/pkg"
 	"github.com/rifkhia/lms-remake/internal/utils"
@@ -233,8 +234,8 @@ func (r *StudentRepositoryImpl) DeleteStudent(c context.Context, id uuid.UUID) p
 	return pkg.CustomError{}
 }
 
-func (r *StudentRepositoryImpl) GetStudentProfile(c context.Context, id uuid.UUID) (*models.StudentProfileRequest, pkg.CustomError) {
-	var student models.StudentProfileRequest
+func (r *StudentRepositoryImpl) GetStudentProfile(c context.Context, id uuid.UUID) (*dto.StudentProfileRequest, pkg.CustomError) {
+	var student dto.StudentProfileRequest
 	rows, err := r.DB.QueryxContext(c, "SELECT id, dateofbirth, gender, address, phone FROM student_profile WHERE id = $1", id)
 	if err != nil {
 		return nil, pkg.CustomError{
@@ -264,7 +265,7 @@ func (r *StudentRepositoryImpl) GetStudentProfile(c context.Context, id uuid.UUI
 	return &student, pkg.CustomError{}
 }
 
-func (r *StudentRepositoryImpl) AddStudentProfile(c context.Context, student *models.StudentProfileRequest) pkg.CustomError {
+func (r *StudentRepositoryImpl) AddStudentProfile(c context.Context, student *dto.StudentProfileRequest) pkg.CustomError {
 	_, err := r.DB.NamedExecContext(c, "INSERT INTO student_profile VALUES(:id, :dateofbirth, :gender, :address, :phone, now(), now(), null)", student)
 	if err != nil {
 		return pkg.CustomError{
@@ -277,7 +278,7 @@ func (r *StudentRepositoryImpl) AddStudentProfile(c context.Context, student *mo
 	return pkg.CustomError{}
 }
 
-func (r *StudentRepositoryImpl) EditStudentProfile(c context.Context, student *models.StudentProfileRequest) pkg.CustomError {
+func (r *StudentRepositoryImpl) EditStudentProfile(c context.Context, student *dto.StudentProfileRequest) pkg.CustomError {
 	_, err := r.DB.NamedExecContext(c, "UPDATE student_profile SET dateofbirth=:dateofbirth, gender=:gender, address=:address, phone=:phone, updated_at=now() WHERE id=:id", student)
 	if err != nil {
 		return pkg.CustomError{
@@ -292,7 +293,7 @@ func (r *StudentRepositoryImpl) EditStudentProfile(c context.Context, student *m
 
 func (r *StudentRepositoryImpl) FetchStudentClass(c context.Context, id uuid.UUID) ([]*models.StudentSchedule, pkg.CustomError) {
 	var schedules []*models.StudentSchedule
-	rows, err := r.DB.QueryxContext(c, "SELECT c.name, c.day, c.start_time, c.end_time FROM students LEFT JOIN public.student_class sc on students.id = sc.student_id LEFT JOIN public.classes c on c.id = sc.class_id WHERE students.id=$1", id)
+	rows, err := r.DB.QueryxContext(c, "SELECT c.name, c.day, c.start_time as starttime, c.end_time as endtime FROM students LEFT JOIN public.student_class sc on students.id = sc.student_id LEFT JOIN public.classes c on c.id = sc.class_id WHERE students.id=$1 ORDER BY day, start_time", id)
 	if err != nil {
 		return nil, pkg.CustomError{
 			Code:    utils.INTERNAL_SERVER_ERROR,
@@ -300,6 +301,8 @@ func (r *StudentRepositoryImpl) FetchStudentClass(c context.Context, id uuid.UUI
 			Service: utils.REPOSITORY_SERVICE,
 		}
 	}
+
+	defer rows.Close()
 
 	for rows.Next() {
 		var schedule = new(models.StudentSchedule)

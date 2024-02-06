@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/google/uuid"
+	"github.com/rifkhia/lms-remake/internal/dto"
 	"github.com/rifkhia/lms-remake/internal/models"
 	"github.com/rifkhia/lms-remake/internal/pkg"
 	"github.com/rifkhia/lms-remake/internal/repository"
@@ -15,10 +16,11 @@ import (
 type StudentUsecase interface {
 	FetchStudentById(c context.Context, id uuid.UUID) (*models.StudentProfile, pkg.CustomError)
 	FetchStudentByName(c context.Context, name string) ([]*models.Student, pkg.CustomError)
-	Register(c context.Context, student *models.StudentRegisterRequest) (interface{}, pkg.CustomError)
-	Login(c context.Context, request *models.StudentLoginRequest) (interface{}, pkg.CustomError)
+	Register(c context.Context, student *dto.StudentRegisterRequest) (interface{}, pkg.CustomError)
+	Login(c context.Context, request *dto.StudentLoginRequest) (interface{}, pkg.CustomError)
 	DeleteStudent(c context.Context, id uuid.UUID) pkg.CustomError
-	EditProfileStudent(c context.Context, request *models.StudentProfileRequest) pkg.CustomError
+	EditProfileStudent(c context.Context, request *dto.StudentProfileRequest) pkg.CustomError
+	FetchStudentSchedule(c context.Context, id uuid.UUID) ([]*models.StudentSchedule, pkg.CustomError)
 }
 
 type StudentUsecaseImpl struct {
@@ -59,7 +61,7 @@ func (s *StudentUsecaseImpl) FetchStudentByName(c context.Context, name string) 
 	return studentResult, pkg.CustomError{}
 }
 
-func (s *StudentUsecaseImpl) Register(c context.Context, student *models.StudentRegisterRequest) (interface{}, pkg.CustomError) {
+func (s *StudentUsecaseImpl) Register(c context.Context, student *dto.StudentRegisterRequest) (interface{}, pkg.CustomError) {
 	studentRequest, err := student.NewStudent()
 	if err.Cause != nil {
 		return nil, err
@@ -86,7 +88,7 @@ func (s *StudentUsecaseImpl) Register(c context.Context, student *models.Student
 	}, pkg.CustomError{}
 }
 
-func (s *StudentUsecaseImpl) Login(c context.Context, request *models.StudentLoginRequest) (interface{}, pkg.CustomError) {
+func (s *StudentUsecaseImpl) Login(c context.Context, request *dto.StudentLoginRequest) (interface{}, pkg.CustomError) {
 	if request.Email == "" || request.Password == "" {
 		return nil, pkg.CustomError{
 			Code:    utils.BAD_REQUEST,
@@ -130,7 +132,7 @@ func (s *StudentUsecaseImpl) DeleteStudent(c context.Context, id uuid.UUID) pkg.
 	return pkg.CustomError{}
 }
 
-func (s *StudentUsecaseImpl) EditProfileStudent(c context.Context, request *models.StudentProfileRequest) pkg.CustomError {
+func (s *StudentUsecaseImpl) EditProfileStudent(c context.Context, request *dto.StudentProfileRequest) pkg.CustomError {
 	student, customError := s.studentRepo.GetStudentProfile(c, request.ID)
 	if customError.Cause != nil {
 		if strings.Contains(customError.Cause.Error(), "no student profile found") {
@@ -153,7 +155,27 @@ func (s *StudentUsecaseImpl) EditProfileStudent(c context.Context, request *mode
 	return pkg.CustomError{}
 }
 
-// func (s *StudentUsecaseImpl)
+func (s *StudentUsecaseImpl) FetchStudentSchedule(c context.Context, id uuid.UUID) ([]*models.StudentSchedule, pkg.CustomError) {
+	studentSchedules, customError := s.studentRepo.FetchStudentClass(c, id)
+	if customError.Cause != nil {
+		return nil, customError
+	}
+
+	for _, schedule := range studentSchedules {
+		schedule.Day = utils.ConvertIntToDay(schedule.Day)
+		schedule.StartTime, customError = utils.ConvertTimes(schedule.StartTime)
+		if customError.Cause != nil {
+			return nil, customError
+		}
+		schedule.EndTime, customError = utils.ConvertTimes(schedule.EndTime)
+		if customError.Cause != nil {
+			return nil, customError
+		}
+	}
+
+	return studentSchedules, pkg.CustomError{}
+}
+
 func NewStudentUsecase(repo repository.StudentRepository) StudentUsecase {
 	return &StudentUsecaseImpl{
 		studentRepo: repo,

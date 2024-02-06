@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/google/uuid"
+	"github.com/rifkhia/lms-remake/internal/dto"
 	"github.com/rifkhia/lms-remake/internal/models"
 	"github.com/rifkhia/lms-remake/internal/pkg"
 	"github.com/rifkhia/lms-remake/internal/repository"
@@ -14,10 +15,11 @@ type ClassUsecase interface {
 	FetchClassById(c context.Context, id int) (*models.Class, pkg.CustomError)
 	FetchClassByTeacherId(c context.Context, teacherId int) ([]*models.Class, pkg.CustomError)
 	FetchClassByName(c context.Context, name string) ([]*models.Class, pkg.CustomError)
-	CreateClass(c context.Context, request *models.ClassCreate, teacherId uuid.UUID) pkg.CustomError
+	CreateClass(c context.Context, request *dto.ClassCreate, teacherId uuid.UUID) pkg.CustomError
 	JoinClass(c context.Context, studentId uuid.UUID, classId int, key string) pkg.CustomError
 	LeftClass(c context.Context, classId int, studentId uuid.UUID) pkg.CustomError
 	CreateSectionClass(c context.Context, request *models.SectionClass) pkg.CustomError
+	AddSubmissionTeacher(c context.Context, request *models.Submission) pkg.CustomError
 }
 
 type classUsecaseImpl struct {
@@ -65,7 +67,7 @@ func (s *classUsecaseImpl) FetchClassByName(c context.Context, name string) ([]*
 	return classResult, pkg.CustomError{}
 }
 
-func (s *classUsecaseImpl) CreateClass(c context.Context, request *models.ClassCreate, teacherId uuid.UUID) pkg.CustomError {
+func (s *classUsecaseImpl) CreateClass(c context.Context, request *dto.ClassCreate, teacherId uuid.UUID) pkg.CustomError {
 	class, err := request.NewClass(teacherId)
 	if err.Cause != nil {
 		return err
@@ -125,6 +127,15 @@ func (s *classUsecaseImpl) CreateSectionClass(c context.Context, request *models
 
 func (s *classUsecaseImpl) LeftClass(c context.Context, classId int, studentId uuid.UUID) pkg.CustomError {
 	customError := s.classRepo.LeftCLass(c, classId, studentId)
+	if customError.Cause != nil {
+		return customError
+	}
+
+	return pkg.CustomError{}
+}
+
+func (s *classUsecaseImpl) AddSubmissionTeacher(c context.Context, request *models.Submission) pkg.CustomError {
+	customError := s.classRepo.InsertSubmissionTeacher(c, request)
 	if customError.Cause != nil {
 		return customError
 	}

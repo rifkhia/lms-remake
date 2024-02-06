@@ -2,7 +2,7 @@ package usecase
 
 import (
 	"context"
-	"github.com/rifkhia/lms-remake/internal/models"
+	"github.com/rifkhia/lms-remake/internal/dto"
 	error2 "github.com/rifkhia/lms-remake/internal/pkg"
 	"github.com/rifkhia/lms-remake/internal/repository"
 	"github.com/rifkhia/lms-remake/internal/utils"
@@ -14,11 +14,11 @@ type teacherUsecaseImpl struct {
 }
 
 type TeacherUsecase interface {
-	LoginTeacher(c context.Context, request *models.TeacherLoginRequest) (interface{}, error2.CustomError)
-	RegisterTeacher(c context.Context, request *models.TeacherRegisterRequest) (interface{}, error2.CustomError)
+	LoginTeacher(c context.Context, request *dto.TeacherLoginRequest) (interface{}, error2.CustomError)
+	RegisterTeacher(c context.Context, request *dto.TeacherRegisterRequest) (interface{}, error2.CustomError)
 }
 
-func (s *teacherUsecaseImpl) LoginTeacher(c context.Context, request *models.TeacherLoginRequest) (interface{}, error2.CustomError) {
+func (s *teacherUsecaseImpl) LoginTeacher(c context.Context, request *dto.TeacherLoginRequest) (interface{}, error2.CustomError) {
 	teacherResult, err := s.teacherRepo.GetTeacherByEmail(c, request.Email)
 	if err.Cause != nil {
 		return nil, err
@@ -47,7 +47,7 @@ func (s *teacherUsecaseImpl) LoginTeacher(c context.Context, request *models.Tea
 	}, error2.CustomError{}
 }
 
-func (s *teacherUsecaseImpl) RegisterTeacher(c context.Context, request *models.TeacherRegisterRequest) (interface{}, error2.CustomError) {
+func (s *teacherUsecaseImpl) RegisterTeacher(c context.Context, request *dto.TeacherRegisterRequest) (interface{}, error2.CustomError) {
 	teacherRequest, err := request.NewTeacher()
 	if err.Cause != nil {
 		return nil, err
