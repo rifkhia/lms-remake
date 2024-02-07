@@ -35,3 +35,9 @@ type StudentSchedule struct {
 	StartTime string `json:"start_time"`
 	EndTime   string `json:"end_time"`
 }
+
+type StudentSubmission struct {
+	ID   uuid.UUID `json:"id"`
+	Name string    `json:"name"`
+	File string    `json:"file"`
+}

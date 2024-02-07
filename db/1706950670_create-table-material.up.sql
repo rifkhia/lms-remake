@@ -1,9 +1,10 @@
-CREATE TABLE materials (
-    id int PRIMARY KEY ,
-    title VARCHAR(50) NOT NULL ,
-    file VARCHAR(50) NOT NULL ,
-    class_section_id int REFERENCES class_sections,
-    created_at TIMESTAMP NOT NULL ,
-    updated_at TIMESTAMP NOT NULL ,
-    deleted_at TIMESTAMP
+CREATE TABLE materials(
+    id serial primary key ,
+    title varchar not null ,
+    description varchar ,
+    file varchar ,
+    class_section_id int references class_sections,
+    created_at timestamp not null ,
+    updated_at timestamp not null ,
+    deleted_at timestamp
 )

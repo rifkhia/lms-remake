@@ -15,7 +15,6 @@ func ConvertTimes(times string) (string, pkg.CustomError) {
 		}
 	}
 
-	// Format to display only the time portion
 	timeOnly := t.Format("15:04")
 
 	return timeOnly, pkg.CustomError{}

@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:postgresql://localhost:5432/lms_remake</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="lms-remake@localhost" uuid="d8f2a508-47b5-484d-93e8-17d7d01e4705">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5432/lms-remake</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>

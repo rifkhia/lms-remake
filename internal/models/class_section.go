@@ -8,4 +8,5 @@ type SectionClass struct {
 	Submission  []Submission `json:"submission"`
 	ClassId     int          `json:"class_id"`
 	Order       int          `json:"order"`
+	Task        bool         `json:"task"`
 }

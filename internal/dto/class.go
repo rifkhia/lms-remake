@@ -1,6 +1,7 @@
 package dto
 
 import (
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/rifkhia/lms-remake/internal/models"
 	"github.com/rifkhia/lms-remake/internal/pkg"
@@ -9,6 +10,15 @@ import (
 )
 
 type ClassCreate struct {
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Day         string `json:"day"`
+	StartTime   string `json:"start_time"`
+	EndTime     string `json:"end_time"`
+}
+
+type ClassByNameResponse struct {
+	ID          int    `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Day         string `json:"day"`
@@ -42,7 +52,7 @@ func (c *ClassCreate) NewClass(teacherId uuid.UUID) (*models.Class, pkg.CustomEr
 		Key:         classKey,
 		TeacherId:   teacherId,
 		Day:         utils.ConvertDaysToInt(c.Day),
-		StartTime:   parsedStartTime,
-		EndTime:     parsedEndTime,
+		StartTime:   fmt.Sprintf("%s", parsedStartTime),
+		EndTime:     fmt.Sprintf("%s", parsedEndTime),
 	}, pkg.CustomError{}
 }

@@ -11,12 +11,14 @@ import (
 	"github.com/rifkhia/lms-remake/internal/pkg"
 	"github.com/rifkhia/lms-remake/internal/usecase"
 	"github.com/rifkhia/lms-remake/internal/utils"
+	"github.com/spf13/viper"
 	"github.com/supabase-community/storage-go"
 	"strconv"
 )
 
 type ClassHandlerImpl struct {
-	classUsecase usecase.ClassUsecase
+	classUsecase   usecase.ClassUsecase
+	studentUsecase usecase.StudentUsecase
 }
 
 func (handler ClassHandlerImpl) Route(app *fiber.App) {
@@ -25,7 +27,9 @@ func (handler ClassHandlerImpl) Route(app *fiber.App) {
 	app.Post("v1/class", middleware.JWTGuardTeacher, handler.CreateClass)
 	app.Post("/v1/class/:id/join", middleware.JWTGuardStudent, handler.StudentJoinClass)
 	app.Post("v1/class/:id/section", middleware.JWTGuardTeacher, handler.CreateClassSection)
-	app.Post("v1/class/:id/section/:section_id/submissions", middleware.JWTGuardTeacher, handler.AddSubmissionsTeacher)
+	app.Post("v1/class/section/:section_id/submissions", middleware.JWTGuardTeacher, handler.AddSubmissionsTeacher)
+	app.Get("v1/class/section/:section_id/submissions", middleware.JWTGuardTeacher, handler.FetchSubmission)
+	app.Post("v1/class/section/:section_id", middleware.JWTGuardStudent, handler.AddSubmissionsStudent)
 }
 
 func (handler *ClassHandlerImpl) FetchClassById(c *fiber.Ctx) error {
@@ -226,56 +230,18 @@ func (handler *ClassHandlerImpl) CreateClassSection(c *fiber.Ctx) error {
 func (handler *ClassHandlerImpl) AddSubmissionsTeacher(c *fiber.Ctx) error {
 	var request models.Submission
 
-	teacherId, err := middleware.GetIdFromToken(c)
+	Id, err := middleware.GetIdFromToken(c)
 	if err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"messsage": err.Error(),
 		})
 	}
 
-	parsedTeacherId, err := uuid.Parse(teacherId)
+	parsedId, err := uuid.Parse(Id)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"messsage": err.Error(),
 		})
-	}
-
-	classId := c.Params("id")
-	if classId == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"message": "id cannot be blank!",
-		})
-	}
-
-	intClassId, err := strconv.Atoi(classId)
-	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"messsage": err.Error(),
-		})
-	}
-
-	class, customError := handler.classUsecase.FetchClassById(c.Context(), intClassId)
-	if customError.Cause != nil {
-		return c.Status(customError.Code).JSON(customError.Error())
-	}
-
-	if class.TeacherId != parsedTeacherId {
-		customError = pkg.CustomError{
-			Code:    utils.FORBIDDEN,
-			Cause:   errors.New("you don't have authority to this class"),
-			Service: utils.HANDLER_SERVICE,
-		}
-		return c.Status(customError.Code).JSON(customError.Error())
-	}
-
-	err = c.BodyParser(&request)
-	if err != nil {
-		customError := pkg.CustomError{
-			Code:    utils.INTERNAL_SERVER_ERROR,
-			Cause:   err,
-			Service: utils.HANDLER_SERVICE,
-		}
-		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
 	sectionClassId := c.Params("section_id")
@@ -292,17 +258,30 @@ func (handler *ClassHandlerImpl) AddSubmissionsTeacher(c *fiber.Ctx) error {
 		})
 	}
 
-	var exists = false
-	for _, v := range class.ClassSection {
-		if intSectionClassId == v.ID {
-			exists = true
-		}
+	sectionClass, customError := handler.classUsecase.FetchSectionClassById(c.Context(), intSectionClassId)
+	if customError.Cause != nil {
+		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
-	if !exists {
+	class, customError := handler.classUsecase.FetchClassById(c.Context(), sectionClass.ClassId)
+	if customError.Cause != nil {
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	if class.TeacherId != parsedId {
+		customError = pkg.CustomError{
+			Code:    utils.FORBIDDEN,
+			Cause:   errors.New("you don't have authority to this class"),
+			Service: utils.HANDLER_SERVICE,
+		}
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	err = c.BodyParser(&request)
+	if err != nil {
 		customError := pkg.CustomError{
-			Code:    utils.BAD_REQUEST,
-			Cause:   errors.New("no section found in this class"),
+			Code:    utils.INTERNAL_SERVER_ERROR,
+			Cause:   err,
 			Service: utils.HANDLER_SERVICE,
 		}
 		return c.Status(customError.Code).JSON(customError.Error())
@@ -330,7 +309,7 @@ func (handler *ClassHandlerImpl) AddSubmissionsTeacher(c *fiber.Ctx) error {
 		return c.Status(customError.Code).JSON(customError.Error())
 	}
 
-	storageGo := storage_go.NewClient("https://sfiaqorbwfekbitsqvsf.supabase.co/storage/v1", "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNmaWFxb3Jid2Zla2JpdHNxdnNmIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTcwNzE1NjM3MywiZXhwIjoyMDIyNzMyMzczfQ.eLQlf2WyPRZLdgvtrIfN4bc_veo2kZiN9M1DS6iX2h0", nil)
+	storageGo := storage_go.NewClient(viper.GetString("SUPABASE_URL"), viper.GetString("SUPABASE_TOKEN"), nil)
 	_, err = storageGo.UploadFile("submissions_teacher", fmt.Sprintf("class_section/%d/%s.pdf", request.ClassSectionId, request.Title), parsedFile)
 	if err != nil {
 		customError := pkg.CustomError{
@@ -342,13 +321,129 @@ func (handler *ClassHandlerImpl) AddSubmissionsTeacher(c *fiber.Ctx) error {
 	}
 
 	linkFile := storageGo.GetPublicUrl("submissions_teacher", fmt.Sprintf("class_section/%d/%s.pdf", request.ClassSectionId, request.Title))
-	linkFile.SignedURL = linkFile.SignedURL + fmt.Sprintf("?download=%s.pdf", request.Title)
-	return c.Status(fiber.StatusOK).JSON(linkFile)
+	request.File = linkFile.SignedURL + fmt.Sprintf("?download=%s.pdf", request.Title)
 
+	customError = handler.classUsecase.AddSubmissionTeacher(c.Context(), &request)
+	if customError.Cause != nil {
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "file uploaded",
+		"link":    request.File,
+	})
 }
 
-func NewClassHandler(classUsecase usecase.ClassUsecase) *ClassHandlerImpl {
+func (handler *ClassHandlerImpl) AddSubmissionsStudent(c *fiber.Ctx) error {
+	var request dto.StudentSubmissionRequest
+
+	Id, err := middleware.GetIdFromToken(c)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"messsage": err.Error(),
+		})
+	}
+
+	parsedId, err := uuid.Parse(Id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"messsage": err.Error(),
+		})
+	}
+
+	sectionClassId := c.Params("section_id")
+	if sectionClassId == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "id cannot be blank!",
+		})
+	}
+
+	intSectionClassId, err := strconv.Atoi(sectionClassId)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"messsage": err.Error(),
+		})
+	}
+
+	err = c.BodyParser(&request)
+	if err != nil {
+		customError := pkg.CustomError{
+			Code:    utils.INTERNAL_SERVER_ERROR,
+			Cause:   err,
+			Service: utils.HANDLER_SERVICE,
+		}
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	file, err := c.FormFile("file")
+	if err != nil {
+		customError := pkg.CustomError{
+			Code:    utils.INTERNAL_SERVER_ERROR,
+			Cause:   err,
+			Service: utils.HANDLER_SERVICE,
+		}
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	request = dto.StudentSubmissionRequest{
+		ID:             parsedId,
+		ClassSectionId: intSectionClassId,
+	}
+
+	customError := handler.classUsecase.AddSubmissionStudent(c.Context(), &request, file)
+	if customError.Cause != nil {
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "file uploaded",
+		"link":    request.File,
+	})
+}
+
+func (handler *ClassHandlerImpl) FetchSubmission(c *fiber.Ctx) error {
+	Id, err := middleware.GetIdFromToken(c)
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"messsage": err.Error(),
+		})
+	}
+
+	parsedId, err := uuid.Parse(Id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"messsage": err.Error(),
+		})
+	}
+
+	sectionClassId := c.Params("section_id")
+	if sectionClassId == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"message": "id cannot be blank!",
+		})
+	}
+
+	intSectionClassId, err := strconv.Atoi(sectionClassId)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"messsage": err.Error(),
+		})
+	}
+
+	submissions, customError := handler.classUsecase.FetchSubmissionBySection(c.Context(), intSectionClassId, parsedId)
+	if customError.Cause != nil {
+		return c.Status(customError.Code).JSON(customError.Error())
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "success getting submissions",
+		"data":    submissions,
+	})
+}
+
+func NewClassHandler(classUsecase usecase.ClassUsecase, studentUsecase usecase.StudentUsecase) *ClassHandlerImpl {
 	return &ClassHandlerImpl{
-		classUsecase: classUsecase,
+		classUsecase:   classUsecase,
+		studentUsecase: studentUsecase,
 	}
 }

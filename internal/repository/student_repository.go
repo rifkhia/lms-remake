@@ -328,6 +328,7 @@ func (r *StudentRepositoryImpl) FetchStudentClass(c context.Context, id uuid.UUI
 
 	return schedules, pkg.CustomError{}
 }
+
 func NewStudentRepository(db *sqlx.DB) StudentRepository {
 	return &StudentRepositoryImpl{
 		DB: db,

@@ -39,7 +39,7 @@ func main() {
 	classUsecase := usecase.NewClassUsecase(classRepository, studentRepository)
 	teacherUsecase := usecase.NewTeacherUsecase(teacherRepository)
 	studentHandler := handler.NewStudentHandler(studentUsecase)
-	classHandler := handler.NewClassHandler(classUsecase)
+	classHandler := handler.NewClassHandler(classUsecase, studentUsecase)
 	teacherHandler := handler.NewTeacherHandler(teacherUsecase)
 	app := fiber.New()
 
@@ -49,5 +49,5 @@ func main() {
 	classHandler.Route(app)
 	teacherHandler.Route(app)
 
-	app.Listen(":8080")
+	app.Listen(":8081")
 }

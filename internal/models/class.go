@@ -2,7 +2,6 @@ package models
 
 import (
 	"github.com/google/uuid"
-	"time"
 )
 
 type Class struct {
@@ -11,9 +10,9 @@ type Class struct {
 	Description  string          `json:"description"`
 	Key          string          `json:"key"`
 	TeacherId    uuid.UUID       `json:"teacher_id"`
-	Day          string          `json:"date"`
-	StartTime    time.Time       `json:"start_time"`
-	EndTime      time.Time       `json:"end_time"`
+	Day          string          `json:"day"`
+	StartTime    string          `json:"start_time"`
+	EndTime      string          `json:"end_time"`
 	ClassSection []*SectionClass `json:"class_section"`
 	Student      []*StudentClass `json:"student"`
 }

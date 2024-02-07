@@ -30,9 +30,14 @@ type ClassRepository interface {
 	JoinClass(c context.Context, classId int, studentId uuid.UUID) pkg.CustomError
 	LeftCLass(c context.Context, classId int, studentId uuid.UUID) pkg.CustomError
 	CheckStudentClassExists(c context.Context, classId int, studentId uuid.UUID) (bool, pkg.CustomError)
+	CheckTeacherClassExists(c context.Context, teacherId uuid.UUID, classId int) (bool, pkg.CustomError)
 	GetClassSectionByClassId(c context.Context, classId int) ([]*models.SectionClass, pkg.CustomError)
 	CreateClassSection(c context.Context, classSection *models.SectionClass) pkg.CustomError
 	InsertSubmissionTeacher(c context.Context, request *models.Submission) pkg.CustomError
+	GetClassSectionById(c context.Context, id int) (*models.SectionClass, pkg.CustomError)
+	UpdateClassSection(c context.Context, classSection *models.SectionClass) pkg.CustomError
+	InsertSubmissionStudent(c context.Context, request *dto.StudentSubmissionRequest) pkg.CustomError
+	GetSubmissionByClassSection(c context.Context, classSecctionId int) ([]*models.StudentSubmission, pkg.CustomError)
 }
 
 type TeacherRepository interface {

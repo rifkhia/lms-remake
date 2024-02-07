@@ -6,7 +6,9 @@ This project is a remake of my old [project](https://github.com/rifkeh/alterra-m
 this project is to develop a LMS or Learning Management System that includes the CMS or Content Management System.  
 
 The project itself develop using Golang and Fiber framework. For the database, i'm using PostgreSql as database driver
-and sqlx as library in Golang.
+and sqlx as library in Golang. For the storage itself using Supabase which to store some file.  
+
+For documentation of this API, you can check in this [link](https://documenter.getpostman.com/view/32763424/2s9Yyy7xdZ)
 
 ## Migrate Database
 
@@ -75,3 +77,11 @@ That is the executable binary that we will run, to run that use command:
 ./main
 ```
 
+## Next Feature
+
+---
+
+These are my next plan on improving this project :
+* Adding OTP by email or by phone number on registering
+* Adding Teacher feedback on student submissions
+* Adding exam using Websocket to get handshake from all student on the exam

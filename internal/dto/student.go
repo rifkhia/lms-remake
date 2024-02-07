@@ -31,6 +31,12 @@ type StudentProfileRequest struct {
 	Phone       string    `json:"phone"`
 }
 
+type StudentSubmissionRequest struct {
+	ID             uuid.UUID `json:"id"`
+	ClassSectionId int       `json:"class_section_id"`
+	File           string    `json:"file"`
+}
+
 func (s *StudentRegisterRequest) NewStudent() (*models.Student, pkg.CustomError) {
 	studentId := uuid.New()
 
